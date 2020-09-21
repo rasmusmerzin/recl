@@ -17,7 +17,7 @@ fn main() {
 
     if let Some(operator) = words.get(1) {
         match operator.as_ref() {
-            "record" => match words.get(2) {
+            "r" | "record" => match words.get(2) {
                 Some(filename) => match record(&words[3..]) {
                     Ok(log) => match log_to_file(&log, filename) {
                         Ok(_) => comment("ok"),
@@ -27,13 +27,18 @@ fn main() {
                 },
                 None => usage(),
             },
-            "play" => match words.get(2) {
+            "p" | "play" => match words.get(2) {
                 Some(filename) => match log_from_file(filename) {
                     Ok(log) => play(&log),
                     Err(e) => comment(&format!("error: {}", e)),
                 },
                 None => usage(),
             },
+            "-v" | "--version" => println!(
+                "{} version {}",
+                env!("CARGO_PKG_NAME"),
+                env!("CARGO_PKG_VERSION")
+            ),
             _ => {
                 comment(&format!("unknown operator: {}", operator));
                 usage();

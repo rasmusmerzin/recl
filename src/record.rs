@@ -8,6 +8,8 @@ pub fn record(cmd: &[String]) -> Result<Log, String> {
         Some(exe) => match Command::new(exe)
             .args(&cmd[1..])
             .stdout(Stdio::piped())
+            // .stderr(Stdio::piped())
+            // .stdin(Stdio::piped())
             .spawn()
         {
             Ok(mut child) => {

@@ -5,7 +5,7 @@ pub fn comment(msg: &str) {
 pub fn usage() {
     let name = env!("CARGO_PKG_NAME");
     println!(
-        "USAGE\n  {} record <file> <command>\n  {} play <file>",
+        "usage: {} r|record <file> <command>\n       {} p|play <file>",
         name, name
     );
 }
