@@ -1,4 +1,4 @@
-use crate::Log;
+use crate::{Log, LogEntry};
 use std::io::{stdout, BufReader, Read, Write};
 use std::process::{Command, Stdio};
 use std::time::Instant;
@@ -22,16 +22,16 @@ pub fn record(cmd: &[String]) -> Result<Log, String> {
 
                     for b in bytes {
                         if let Ok(b) = b {
-                            let ts = start.elapsed().as_millis() as u64;
-                            if ts == last_ts {
+                            let timestamp = start.elapsed().as_millis() as u64;
+                            if timestamp == last_ts {
                                 match log.last_mut() {
-                                    Some(entry) => entry.1.push(b),
-                                    None => log.push((ts, vec![b])),
+                                    Some(entry) => entry.bytes.push(b),
+                                    None => log.push(LogEntry::new(1, timestamp, vec![b])),
                                 }
                             } else {
-                                log.push((ts, vec![b]));
+                                log.push(LogEntry::new(1, timestamp, vec![b]));
                             }
-                            last_ts = ts;
+                            last_ts = timestamp;
 
                             let _ = stdout().write(&[b]);
                             let _ = stdout().flush();
