@@ -1,7 +1,7 @@
 use std::env::args;
 
-mod log;
-use log::{log_from_file, log_to_file, Log, LogEntry};
+pub mod log;
+use log::{log_from_file, log_to_file, Log};
 
 mod record;
 use record::record;

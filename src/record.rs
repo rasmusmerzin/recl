@@ -1,6 +1,8 @@
-use crate::{Log, LogEntry};
-use std::io::{stdout, BufReader, Read, Write};
+use crate::log::{log_from_bytes, Log};
+use std::io::{BufReader, Read};
 use std::process::{Command, Stdio};
+use std::sync::Mutex;
+use std::thread::spawn;
 use std::time::Instant;
 
 pub fn record(cmd: &[String]) -> Result<Log, String> {
@@ -8,42 +10,48 @@ pub fn record(cmd: &[String]) -> Result<Log, String> {
         Some(exe) => match Command::new(exe)
             .args(&cmd[1..])
             .stdout(Stdio::piped())
-            // .stderr(Stdio::piped())
-            // .stdin(Stdio::piped())
+            .stderr(Stdio::piped())
             .spawn()
         {
-            Ok(mut child) => {
-                if let Some(stream) = child.stdout.as_mut() {
-                    let mut log: Log = Vec::new();
-                    let start = Instant::now();
-                    let bytes = BufReader::new(stream).bytes();
+            Ok(child) => {
+                let out = Mutex::new(child.stdout);
+                let err = Mutex::new(child.stderr);
 
-                    let mut last_ts = 0u64;
+                let start = Instant::now();
 
-                    for b in bytes {
-                        if let Ok(b) = b {
-                            let timestamp = start.elapsed().as_millis() as u64;
-                            if timestamp == last_ts {
-                                match log.last_mut() {
-                                    Some(entry) => entry.bytes.push(b),
-                                    None => log.push(LogEntry::new(1, timestamp, vec![b])),
-                                }
-                            } else {
-                                log.push(LogEntry::new(1, timestamp, vec![b]));
-                            }
-                            last_ts = timestamp;
+                let mut handles = Vec::new();
 
-                            let _ = stdout().write(&[b]);
-                            let _ = stdout().flush();
-                        }
+                handles.push(spawn(move || {
+                    let mut out = out.lock().unwrap();
+                    if let Some(mut bytes) = out
+                        .as_mut()
+                        .map(|s| BufReader::new(s as &mut dyn Read).bytes())
+                    {
+                        Some(log_from_bytes(&mut bytes, &start, 1))
+                    } else {
+                        None
                     }
+                }));
 
-                    child.wait().unwrap();
-                    Ok(log)
-                } else {
-                    child.kill().unwrap();
-                    Err("Could not attach stream".to_string())
+                handles.push(spawn(move || {
+                    let mut err = err.lock().unwrap();
+                    if let Some(mut bytes) = err
+                        .as_mut()
+                        .map(|s| BufReader::new(s as &mut dyn Read).bytes())
+                    {
+                        Some(log_from_bytes(&mut bytes, &start, 1))
+                    } else {
+                        None
+                    }
+                }));
+
+                let mut log: Log = Vec::new();
+                for handle in handles {
+                    log.extend(handle.join().unwrap().unwrap());
                 }
+                log.sort_unstable_by_key(|entry| entry.timestamp);
+
+                Ok(log)
             }
             Err(e) => Err(format!("{}", e)),
         },
