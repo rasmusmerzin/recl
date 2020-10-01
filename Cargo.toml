@@ -2,5 +2,9 @@
 name = "recl"
 version = "0.2.1"
 authors = ["rasmusmerzin <rasmusmerzin@gmail.com>"]
-edition = "2018"
+repository = "https://github.com/rasmusmerzin/recl"
+description = "A simple program to record CLI with."
+readme = "README.md"
 license = "MIT"
+edition = "2018"
+keywords = ["cli", "stdio"]
