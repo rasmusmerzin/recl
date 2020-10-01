@@ -73,7 +73,7 @@ pub fn log_from_bytes(
     bytes: &mut Bytes<BufReader<&mut dyn Read>>,
     start: &Instant,
     channel: u8,
-    sink: &mut dyn Write,
+    write: &mut dyn Write,
 ) -> Log {
     let mut last_ts = 0u64;
     let mut log: Log = Vec::new();
@@ -89,8 +89,8 @@ pub fn log_from_bytes(
             } else {
                 log.push(LogEntry::new(channel, timestamp, vec![b]));
             }
-            let _ = sink.write(&[b]);
-            let _ = sink.flush();
+            let _ = write.write(&[b]);
+            let _ = write.flush();
             last_ts = timestamp;
         }
     }

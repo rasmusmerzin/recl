@@ -1,5 +1,5 @@
 use crate::Log;
-use std::io::{stdout, Write};
+use std::io::{stderr, stdout, Write};
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 
@@ -10,7 +10,12 @@ pub fn play(log: &Log) {
         if ts < entry.timestamp {
             sleep(Duration::from_millis(entry.timestamp - ts));
         }
-        let _ = stdout().write(&entry.bytes);
-        let _ = stdout().flush();
+        let mut write: Box<dyn Write>;
+        match &entry.channel {
+            2 => write = Box::new(stderr()),
+            _ => write = Box::new(stdout()),
+        }
+        let _ = write.write(&entry.bytes);
+        let _ = write.flush();
     }
 }
