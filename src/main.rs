@@ -1,6 +1,6 @@
 use std::env::args;
 
-mod log;
+pub mod log;
 use log::{log_from_file, log_to_file, Log};
 
 mod record;
