@@ -1,5 +1,5 @@
 use crate::log::{log_from_bytes, Log};
-use std::io::{BufReader, Read};
+use std::io::{stderr, stdout, BufReader, Read};
 use std::process::{Command, Stdio};
 use std::sync::Mutex;
 use std::thread::spawn;
@@ -27,7 +27,7 @@ pub fn record(cmd: &[String]) -> Result<Log, String> {
                         .as_mut()
                         .map(|s| BufReader::new(s as &mut dyn Read).bytes())
                     {
-                        Some(log_from_bytes(&mut bytes, &start, 1))
+                        Some(log_from_bytes(&mut bytes, &start, 1, &mut stdout()))
                     } else {
                         None
                     }
@@ -39,7 +39,7 @@ pub fn record(cmd: &[String]) -> Result<Log, String> {
                         .as_mut()
                         .map(|s| BufReader::new(s as &mut dyn Read).bytes())
                     {
-                        Some(log_from_bytes(&mut bytes, &start, 1))
+                        Some(log_from_bytes(&mut bytes, &start, 2, &mut stderr()))
                     } else {
                         None
                     }
