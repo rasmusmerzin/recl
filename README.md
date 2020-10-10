@@ -47,5 +47,5 @@ cargo install recl
 #### [Osoy](https://github.com/osoy/osoy)
 
 ```
-osoy c rasmusmerzin/recl
+osoy clone rasmusmerzin/recl
 ```
