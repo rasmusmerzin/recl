@@ -1,5 +1,5 @@
-use crate::log::{log_from_bytes, Log};
-use std::io::{stderr, stdout, BufReader, Read};
+use crate::log::{log_bytes, Log};
+use std::io::{stderr, stdout};
 use std::process::{Command, Stdio};
 use std::sync::Mutex;
 use std::thread::spawn;
@@ -23,11 +23,8 @@ pub fn record(cmd: &[String]) -> Result<Log, String> {
 
                 handles.push(spawn(move || {
                     let mut out = out.lock().unwrap();
-                    if let Some(mut bytes) = out
-                        .as_mut()
-                        .map(|s| BufReader::new(s as &mut dyn Read).bytes())
-                    {
-                        Some(log_from_bytes(&mut bytes, &start, 1, &mut stdout()))
+                    if let Some(mut out) = out.as_mut() {
+                        Some(log_bytes(&mut out, &mut stdout(), &start, 1))
                     } else {
                         None
                     }
@@ -35,11 +32,8 @@ pub fn record(cmd: &[String]) -> Result<Log, String> {
 
                 handles.push(spawn(move || {
                     let mut err = err.lock().unwrap();
-                    if let Some(mut bytes) = err
-                        .as_mut()
-                        .map(|s| BufReader::new(s as &mut dyn Read).bytes())
-                    {
-                        Some(log_from_bytes(&mut bytes, &start, 2, &mut stderr()))
+                    if let Some(mut err) = err.as_mut() {
+                        Some(log_bytes(&mut err, &mut stderr(), &start, 2))
                     } else {
                         None
                     }
@@ -55,6 +49,6 @@ pub fn record(cmd: &[String]) -> Result<Log, String> {
             }
             Err(e) => Err(format!("{}", e)),
         },
-        None => Err("No command given".to_string()),
+        None => Err("no command given".to_string()),
     }
 }

@@ -1,5 +1,5 @@
 use std::fs::{read, write};
-use std::io::{BufReader, Bytes, Read, Write};
+use std::io::{BufReader, Read, Write};
 use std::time::Instant;
 
 pub struct LogEntry {
@@ -69,16 +69,11 @@ pub fn log_to_file(log: &Log, filename: &str) -> std::io::Result<()> {
     write(filename, &output)
 }
 
-pub fn log_from_bytes(
-    bytes: &mut Bytes<BufReader<&mut dyn Read>>,
-    start: &Instant,
-    channel: u8,
-    write: &mut dyn Write,
-) -> Log {
+pub fn log_bytes(from: &mut dyn Read, to: &mut dyn Write, start: &Instant, channel: u8) -> Log {
     let mut last_ts = 0u64;
     let mut log: Log = Vec::new();
 
-    for b in bytes {
+    for b in BufReader::new(from).bytes() {
         if let Ok(b) = b {
             let timestamp = start.elapsed().as_millis() as u64;
             if timestamp == last_ts {
@@ -89,8 +84,8 @@ pub fn log_from_bytes(
             } else {
                 log.push(LogEntry::new(channel, timestamp, vec![b]));
             }
-            let _ = write.write(&[b]);
-            let _ = write.flush();
+            let _ = to.write(&[b]);
+            let _ = to.flush();
             last_ts = timestamp;
         }
     }
